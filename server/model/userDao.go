@@ -43,6 +43,7 @@ func (ud UserDao) getUserByUd(conn redis.Conn, id int) (user *User, err error) {
 	// 这里我们需要把res反序列化成为一个user对象
 	err = json.Unmarshal([]byte(res), user)
 	if err != nil {
+
 		fmt.Println("json.Unmarshal fail, err = ", err)
 		return
 	}
