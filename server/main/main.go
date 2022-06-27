@@ -17,11 +17,14 @@ func process(conn net.Conn) {
 	p.Process3()
 }
 
-func main() {
+func init() {
 	// 当服务器启动时候我们就去初始化连接池
 	initPool("localhost:6379", 16, 0, 300*time.Second)
+	// Dao只需要启动一次，有点类似于单例
 	initUserDao()
+}
 
+func main() {
 	fmt.Println("服务器[新的结构]在8889端口监听")
 	listen, err := net.Listen("tcp", "0.0.0.0:8889")
 	if err != nil {

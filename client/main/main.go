@@ -9,6 +9,7 @@ import (
 // 定义两个全局变量，一个表示用户的id，一个表示用户的密码
 var userId int
 var userPwd string
+var userName string
 
 func main() {
 	//接受用户的选择
@@ -42,7 +43,16 @@ func main() {
 			// loop = false
 		case 2:
 			fmt.Println("注册用户")
-			// loop = false
+			fmt.Println("请输入新用户的id号码")
+			//这里也可以使用Scanln应该会自动识别
+			fmt.Scanf("%d\n", &userId)
+			fmt.Println("请输入新用户的密码")
+			fmt.Scanf("%s\n", &userPwd)
+			fmt.Println("请输入新用户的姓名")
+			fmt.Scanf("%s\n", &userName)
+			// 调用instance完成注册请求
+			up := &process.UserProcess{}
+			up.Register(userId, userPwd, userName)
 		case 3:
 			fmt.Println("退出系统")
 			os.Exit(0)

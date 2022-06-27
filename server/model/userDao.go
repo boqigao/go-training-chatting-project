@@ -53,7 +53,7 @@ func (ud UserDao) getUserByUd(conn redis.Conn, id int) (user *User, err error) {
 // 1。 完成对用户的验证
 // 2。 如果用户的id和pwd都正确，则返回一个user对象
 // 3。 如果用户的id或者pwd错误，则返回一个错误信息
-func (ud UserDao) Login(userId int, userPwd string) (user *User, err error) {
+func (ud *UserDao) Login(userId int, userPwd string) (user *User, err error) {
 	conn := ud.pool.Get()
 	defer conn.Close()
 	user, err = ud.getUserByUd(conn, userId)
@@ -63,6 +63,33 @@ func (ud UserDao) Login(userId int, userPwd string) (user *User, err error) {
 
 	if user.UserPwd != userPwd {
 		err = ERROR_USER_PWD
+		return
+	}
+	return
+}
+
+func (ud *UserDao) Register(user *User) (err error) {
+	conn := ud.pool.Get()
+
+	defer conn.Close()
+
+	_, err = ud.getUserByUd(conn, user.UserId)
+	if err == nil {
+		// 如果没有错误，反而证明user已经存在
+		err = ERROR_USER_EXISTS
+		return
+	}
+
+	// 注册用户
+	data, err := json.Marshal(user)
+
+	if err != nil {
+		return err
+	}
+
+	_, err = conn.Do("HSet", "users", user.UserId, string(data))
+	if err != nil {
+		fmt.Println("注册用户错误 err = ", err)
 		return
 	}
 	return

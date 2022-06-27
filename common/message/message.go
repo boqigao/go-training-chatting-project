@@ -1,11 +1,14 @@
 package message
 
+import "HugeChattingSystem/server/model"
+
 // 确定一些消息类型
 const (
 	LoginMesType    = "LoginMes"
 	LoginResMesType = "LoginResMes"
 
-	RegisterMesType = "RegisterMes"
+	RegisterMesType    = "RegisterMes"
+	RegisterResMesType = "RegisterResMes"
 )
 
 // Message 可以理解为一个最基础的message类
@@ -28,4 +31,10 @@ type LoginResMes struct {
 }
 
 type RegisterMes struct {
+	User model.User `json:"user"` // 类型就是user结构体
+}
+
+type RegisterResMes struct {
+	Code  int    `json:"code"` // 400 已经占有，200表示成功
+	Error string `json:"error"`
 }

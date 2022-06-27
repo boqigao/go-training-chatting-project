@@ -7,14 +7,80 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"os"
 )
 
 type UserProcess struct {
 	//暂时不需要任何字段
 }
 
-// 写一个函数完成登陆校验
+func (up *UserProcess) Register(userId int, userPwd string, userName string) (err error) {
+	conn, err := net.Dial("tcp", "localhost:8889")
+	if err != nil {
+		fmt.Println("net.Dial err = ", err)
+		return err
+	}
+	defer conn.Close()
 
+	var mes message.Message
+	mes.Type = message.RegisterMesType
+	var registerMes message.RegisterMes
+	registerMes.User.UserId = userId
+	registerMes.User.UserName = userName
+	registerMes.User.UserPwd = userPwd
+
+	// 序列化具体的mes
+	data, err := json.Marshal(registerMes)
+	if err != nil {
+		fmt.Println("json.Marshal err = ", err)
+		return err
+	}
+
+	// 序列化整个mes
+	mes.Data = string(data)
+
+	data, err = json.Marshal(mes)
+	if err != nil {
+		fmt.Println("json.Marshal err = ", err)
+		return err
+	}
+
+	transfer := utils.Transfer{
+		Conn:   conn,
+		Buffer: [8094]byte{},
+	}
+
+	err = transfer.WritePkg(data)
+
+	if err != nil {
+		fmt.Println("注册信息发送错误，err = ", err)
+	}
+
+	// 处理服务器返回的数据
+	mes, err = transfer.ReadPkg()
+
+	if err != nil {
+		fmt.Println("服务器返回消息（注册信息）错误， err = ", err)
+	}
+
+	var registerResMes message.RegisterResMes
+	err = json.Unmarshal([]byte(mes.Data), &registerResMes)
+
+	if registerResMes.Code == 200 {
+		fmt.Printf("恭喜您！注册新用户%s成功，请您登录。\n", userName)
+		os.Exit(0)
+	} else {
+		if registerResMes.Code == 400 {
+			fmt.Printf("用户名%s已经占有，注册失败", userName)
+			fmt.Printf("错误代码%v, 错误内容%s", registerResMes.Code, registerResMes.Error)
+		}
+		os.Exit(0)
+	}
+
+	return
+}
+
+// Login 写一个函数完成登陆校验
 func (up *UserProcess) Login(userId int, userPwd string) (err error) {
 	conn, err := net.Dial("tcp", "localhost:8889")
 	if err != nil {
@@ -97,8 +163,8 @@ func (up *UserProcess) Login(userId int, userPwd string) (err error) {
 		for {
 			ShowMenu()
 		}
-	} else if loginResMes.Code == 500 {
-		fmt.Println(loginResMes.Error)
+	} else {
+		fmt.Printf("登录失败，错误代码为%d, 错误详细信息为%s\n", loginResMes.Code, loginResMes.Error)
 	}
 	return
 }

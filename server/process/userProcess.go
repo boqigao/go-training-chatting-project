@@ -15,6 +15,48 @@ type UserProcess struct {
 	//
 }
 
+func (up *UserProcess) ServerProcessRegister(mes *message.Message) (err error) {
+	var registerMes message.RegisterMes
+	err = json.Unmarshal([]byte(mes.Data), &registerMes)
+	if err != nil {
+		fmt.Println("json.Unmarshal([]byte(mes.Data), &loginMes) fail, err = ", err)
+		return err
+	}
+
+	// 先声明一个resMessage
+	var resMes message.Message
+	resMes.Type = message.RegisterResMesType
+	var registerResMes message.RegisterResMes
+
+	err = model.MyUserDao.Register(&registerMes.User)
+
+	if err != nil {
+		return
+	} else {
+		registerResMes.Code = 200
+	}
+
+	// 将loginResMes序列化
+	data, err := json.Marshal(registerResMes)
+	if err != nil {
+		return
+	}
+
+	resMes.Data = string(data)
+
+	data, err = json.Marshal(resMes)
+	if err != nil {
+		fmt.Println("json.Marshal(resMes) fail, err = ", err)
+	}
+
+	transfer := utils.Transfer{
+		Conn: up.Conn,
+	}
+	err = transfer.WritePkg(data)
+	return err
+
+}
+
 // ServerProcessLogin 编写一个函数serverProcessLogin，专门处理登录请求
 func (up *UserProcess) ServerProcessLogin(mes *message.Message) (err error) {
 	// 先从message中取出mes.Data, 并且直接反序列化成LoginMes
@@ -41,8 +83,16 @@ func (up *UserProcess) ServerProcessLogin(mes *message.Message) (err error) {
 		loginResMes.Error = ""
 	} else {
 		// 不合法
-		loginResMes.Code = 500
-		loginResMes.Error = "用户不存在，需要注册再使用"
+		if err == model.ERROR_USER_NOT_EXISTS {
+			loginResMes.Code = 500
+			loginResMes.Error = err.Error()
+		} else if err == model.ERROR_USER_PWD {
+			loginResMes.Code = 403
+			loginResMes.Error = err.Error()
+		} else {
+			loginResMes.Code = 505
+			loginResMes.Error = "未知错误"
+		}
 	}
 
 	// 将loginResMes序列化
