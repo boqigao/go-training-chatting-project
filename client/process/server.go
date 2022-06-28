@@ -2,6 +2,8 @@ package process
 
 import (
 	"HugeChattingSystem/client/utils"
+	"HugeChattingSystem/common/message"
+	"encoding/json"
 	"fmt"
 	"net"
 	"os"
@@ -22,6 +24,7 @@ func ShowMenu() {
 	switch key {
 	case 1:
 		fmt.Println("显示在线用户列表")
+		outputOnlineUser()
 	case 2:
 		fmt.Println("发送消息")
 	case 3:
@@ -47,5 +50,20 @@ func serverProcessMes(conn net.Conn) {
 			fmt.Println("tf.ReadPkg() fail, err = ", err)
 		}
 		fmt.Println("mes =", mes)
+
+		switch mes.Type {
+		case message.NotifyUserStatusMesType:
+			// 有人上线了
+			// 1. 取出notifyMessage
+			var notifyUserStatusMes message.NotifyUserStatusMes
+			json.Unmarshal([]byte(mes.Data), &notifyUserStatusMes)
+			// 2. 把这个用户的信息，状态，保存在客户端的map中（？）
+			updateUserStatus(&notifyUserStatusMes)
+
+		default:
+			// 返回了一个暂时不能识别的消息
+			fmt.Println("服务器返回了未知的消息类型")
+
+		}
 	}
 }
