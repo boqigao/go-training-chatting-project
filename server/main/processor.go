@@ -16,6 +16,7 @@ type Processor struct {
 // ServerProcessMes 编写一个serverProcessMes函数
 // 根据客户端发送消息种类不同，决定调用哪个函数来处理
 func (p *Processor) ServerProcessMes(mes *message.Message) (err error) {
+	fmt.Println("mes=", mes)
 	switch mes.Type {
 	case message.LoginMesType:
 		// 创建一个userProcessor
@@ -29,6 +30,9 @@ func (p *Processor) ServerProcessMes(mes *message.Message) (err error) {
 			Conn: p.Conn,
 		}
 		err = up.ServerProcessRegister(mes)
+	case message.SmsMesType:
+		smsProcess := &process2.SmsProcess{}
+		smsProcess.SendGroupMes(mes)
 	default:
 		fmt.Println("消息类型不存在，无法处理。。。")
 	}

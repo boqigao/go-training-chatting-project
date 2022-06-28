@@ -1,12 +1,14 @@
 package process
 
 import (
+	"HugeChattingSystem/client/model"
 	"HugeChattingSystem/common/message"
 	"fmt"
 )
 
 // 客户端也要维护一个在线的用户的map
 var onlineUsers = make(map[int]*message.User, 10)
+var CurUser model.CurUser // 我们在用户登录成功后，完成对curUser的初始化
 
 // 显示当前在线的用户
 func outputOnlineUser() {
